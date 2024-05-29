@@ -90,3 +90,4 @@ multivariate_plot <- plot_ly(data = clothes_data, x = ~Price, y = ~Category, typ
 # Display multivariate plot
 multivariate_plot
 
+

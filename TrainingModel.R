@@ -51,3 +51,34 @@ model <- train(Price ~ ., data = clothes_data, method = "lm", trControl = contro
 
 # View model results
 print(model)
+
+# Load necessary library (if not already loaded)
+library(caret)
+
+# Define cross-validation method
+control <- trainControl(method = "cv", number = 10) # 10-fold cross-validation
+
+# Train the linear regression model using cross-validation
+lm_model <- train(Price ~ ., data = clothes_data, method = "lm", trControl = control)
+
+# View model results
+print(lm_model)
+
+# Load necessary library (if not already loaded)
+library(randomForest)
+
+# Train the random forest regression model
+rf_model <- randomForest(Price ~ ., data = clothes_data)
+
+# View model results
+print(rf_model)
+
+# Load necessary library (if not already loaded)
+library(gbm)
+
+# Train the gradient boosting regression model
+gbm_model <- gbm(Price ~ ., data = clothes_data, n.trees = 100, interaction.depth = 4)
+
+# View model results
+print(gbm_model)
+

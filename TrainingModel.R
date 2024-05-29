@@ -38,3 +38,16 @@ boot_results <- boot(data = clothes_data, statistic = bootstrap_func, R = 1000)
 
 # View bootstrap results
 print(boot_results)
+
+# Load necessary library
+library(caret)
+
+# Define cross-validation method
+control <- trainControl(method = "cv", number = 10) # 10-fold cross-validation
+
+# Train the model using cross-validation
+# For example, let's say you want to train a linear regression model
+model <- train(Price ~ ., data = clothes_data, method = "lm", trControl = control)
+
+# View model results
+print(model)

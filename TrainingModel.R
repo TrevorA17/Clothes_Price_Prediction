@@ -82,3 +82,26 @@ gbm_model <- gbm(Price ~ ., data = clothes_data, n.trees = 100, interaction.dept
 # View model results
 print(gbm_model)
 
+# Load necessary libraries
+library(caret)
+library(randomForest)
+library(gbm)
+
+# Define cross-validation method
+control <- trainControl(method = "cv", number = 10) # 10-fold cross-validation
+
+# Define models
+models <- list(
+  lm = train(Price ~ ., data = clothes_data, method = "lm", trControl = control),
+  rf = train(Price ~ ., data = clothes_data, method = "rf", trControl = control),
+  gbm = train(Price ~ ., data = clothes_data, method = "gbm", trControl = control)
+)
+
+# Compare model performance using resamples
+model_resamples <- resamples(models)
+
+# Summarize model performance
+summary(model_resamples)
+
+# Plot model performance
+dotplot(model_resamples)

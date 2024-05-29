@@ -44,3 +44,9 @@ frequency_material
 central_tendency_summary
 distribution_summary
 correlation_matrix
+
+# Perform ANOVA
+anova_result <- aov(Price ~ Category, data = clothes_data)
+
+# Summary of ANOVA
+summary(anova_result)

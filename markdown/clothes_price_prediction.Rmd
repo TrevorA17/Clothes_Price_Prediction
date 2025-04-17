@@ -1,0 +1,311 @@
+---
+title: "Clothes Price Prediction"
+author: "Trevor Okinda"
+date: "2024"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+    fig_width: 6
+    fig_height: 4
+    df_print: default
+editor_options:
+  chunk_output_type: console
+---
+
+
+# Student Details
+
+|                                              |     |
+|----------------------------------------------|-----|
+| **Student ID Number**                        | 134780 |
+| **Student Name**                             | Trevor Okinda |
+| **BBIT 4.2 Group**                           | C |
+| **Project Name**                             | Clothes Price Prediction |
+
+# Setup Chunk
+
+**Note:** the following KnitR options have been set as the global defaults: <BR> `knitr::opts_chunk$set(echo = TRUE, warning = FALSE, eval = TRUE, collapse = FALSE, tidy = TRUE)`.
+
+More KnitR options are documented here <https://bookdown.org/yihui/rmarkdown-cookbook/chunk-options.html> and here <https://yihui.org/knitr/options/>.
+
+```{r setup, include=FALSE}
+library(formatR)
+knitr::opts_chunk$set(
+  warning = FALSE,
+  collapse = FALSE
+)
+```
+
+### Source: 
+
+The dataset that was used can be downloaded here: *\<https://www.kaggle.com/datasets/mrsimple07/clothes-price-prediction\>*
+
+### Reference:
+
+*\<AAbdurakhimov, M. (2024). Clothes Price Prediction [Dataset]. Kaggle. https://www.kaggle.com/datasets/mrsimple07/clothes-price-prediction\>\
+Refer to the APA 7th edition manual for rules on how to cite datasets: <https://apastyle.apa.org/style-grammar-guidelines/references/examples/data-set-references>*
+
+# Understanding the Dataset (Exploratory Data Analysis (EDA))
+## Load dataset
+```{r load dataset}
+# Load necessary library
+library(dplyr)
+
+# Load dataset
+clothes_data <- read.csv("clothes_price_prediction_data.csv", colClasses = c(
+  Brand = "factor",
+  Category = "factor",
+  Color = "factor",
+  Size = "factor",
+  Material = "factor",
+  Price = "numeric"
+))
+
+```
+
+## Measures of Frequency
+```{r MOF}
+# Measures of Frequency
+frequency_brand <- clothes_data %>% count(Brand)
+frequency_category <- clothes_data %>% count(Category)
+frequency_color <- clothes_data %>% count(Color)
+frequency_size <- clothes_data %>% count(Size)
+frequency_material <- clothes_data %>% count(Material)
+```
+
+## Measures of Central Tendency
+```{r MOCT}
+# Measures of Central Tendency
+central_tendency_summary <- summarise(clothes_data, 
+                                      mean_price = mean(Price),
+                                      median_price = median(Price),
+                                      mode_price = as.numeric(names(sort(-table(Price))[1])))
+
+```
+
+## Measures of Distribution
+```{r MOD}
+# Measures of Distribution
+distribution_summary <- summarise(clothes_data,
+                                  min_price = min(Price),
+                                  max_price = max(Price),
+                                  range_price = max_price - min_price,
+                                  sd_price = sd(Price),
+                                  quantiles_price = quantile(Price))
+```
+
+## Measures of Relationship
+```{r MOR}
+# Measures of Relationship (Correlation Matrix)
+correlation_matrix <- cor(select(clothes_data, -c(1:5))) # Excluding non-numeric columns
+```
+
+## Results
+```{r results}
+# Display results
+frequency_brand
+frequency_category
+frequency_color
+frequency_size
+frequency_material
+central_tendency_summary
+distribution_summary
+correlation_matrix
+```
+
+## ANOVA
+```{r ANOVA}
+# Perform ANOVA
+anova_result <- aov(Price ~ Category, data = clothes_data)
+
+# Summary of ANOVA
+summary(anova_result)
+```
+
+## Plots
+```{r Plots}
+# Load necessary libraries
+library(ggplot2)
+
+# Univariate Plot for Price variable
+price_plot <- ggplot(clothes_data, aes(x = Price)) +
+  geom_histogram(fill = "skyblue", color = "black", bins = 30) +
+  labs(title = "Distribution of Prices", x = "Price", y = "Frequency")
+
+# Univariate Plot for Category variable
+category_plot <- ggplot(clothes_data, aes(x = Category)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Frequency of Categories", x = "Category", y = "Frequency") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Display univariate plots
+price_plot
+category_plot
+# Load necessary libraries
+library(plotly)
+
+# Multivariate Plot (Scatter Plot)
+multivariate_plot <- plot_ly(data = clothes_data, x = ~Price, y = ~Category, type = "scatter", mode = "markers",
+                             marker = list(color = "rgba(255, 182, 193, 0.7)", size = 10),
+                             text = ~paste("Price: $", Price, "<br>Category: ", Category)) %>%
+  layout(title = "Price vs. Category", xaxis = list(title = "Price"), yaxis = list(title = "Category"))
+
+# Display multivariate plot
+multivariate_plot
+```
+
+# Preprocessing and Data Transformation
+## Missing Values
+```{r Missing Values}
+# Check for missing values
+missing_values <- colSums(is.na(clothes_data))
+
+# Print the count of missing values
+print(missing_values)
+
+```
+
+# Training Models
+## Data Splitting
+```{r Data Splitting}
+library(caTools)
+
+# Split the dataset into training and testing sets
+set.seed(123) # For reproducibility
+split <- sample.split(clothes_data$Price, SplitRatio = 0.7)
+train_data <- subset(clothes_data, split == TRUE)
+test_data <- subset(clothes_data, split == FALSE)
+
+dim(train_data)
+dim(test_data)
+```
+
+## Bootstrapping
+```{r Bootstrapping}
+# Load necessary library
+library(boot)
+
+# Define function for bootstrapping
+bootstrap_func <- function(data, indices) {
+  sampled_data <- data[indices, ]
+  # Perform your analysis or modeling here
+  # For example, you can fit a linear model:
+  lm_model <- lm(Price ~ ., data = sampled_data)
+  # Then return the parameters you're interested in
+  return(coef(lm_model))
+}
+
+# Perform bootstrapping
+boot_results <- boot(data = clothes_data, statistic = bootstrap_func, R = 1000)
+
+# View bootstrap results
+print(boot_results)
+
+```
+
+## Cross-validation
+```{r Cross-validation}
+# Load necessary library
+library(caret)
+
+# Define cross-validation method
+control <- trainControl(method = "cv", number = 10) # 10-fold cross-validation
+
+# Train the model using cross-validation
+# For example, let's say you want to train a linear regression model
+model <- train(Price ~ ., data = clothes_data, method = "lm", trControl = control)
+
+# View model results
+print(model)
+```
+
+## Training Different Models
+```{r Training Different Models}
+# Load necessary library (if not already loaded)
+library(caret)
+
+# Define cross-validation method
+control <- trainControl(method = "cv", number = 10) # 10-fold cross-validation
+
+# Train the linear regression model using cross-validation
+lm_model <- train(Price ~ ., data = clothes_data, method = "lm", trControl = control)
+
+# View model results
+print(lm_model)
+
+# Load necessary library (if not already loaded)
+library(randomForest)
+
+# Train the random forest regression model
+rf_model <- randomForest(Price ~ ., data = clothes_data)
+
+# View model results
+print(rf_model)
+
+# Load necessary library (if not already loaded)
+library(gbm)
+
+# Train the gradient boosting regression model
+gbm_model <- gbm(Price ~ ., data = clothes_data, n.trees = 100, interaction.depth = 4)
+
+# View model results
+print(gbm_model)
+
+```
+
+## Performance Comparison
+```{r Performance Comparison}
+# Load necessary libraries
+library(caret)
+library(randomForest)
+library(gbm)
+
+# Define cross-validation method
+control <- trainControl(method = "cv", number = 10) # 10-fold cross-validation
+
+# Define models
+models <- list(
+  lm = train(Price ~ ., data = clothes_data, method = "lm", trControl = control),
+  rf = train(Price ~ ., data = clothes_data, method = "rf", trControl = control),
+  gbm = train(Price ~ ., data = clothes_data, method = "gbm", trControl = control)
+)
+
+# Compare model performance using resamples
+model_resamples <- resamples(models)
+
+# Summarize model performance
+summary(model_resamples)
+
+# Plot model performance
+dotplot(model_resamples)
+
+```
+
+# Saving Model
+```{r Saving Model}
+# Saving the Linear Regression model
+saveRDS(lm_model, "./models/saved_lm_model.rds")
+
+# Load the saved model
+loaded_lm_model <- readRDS("./models/saved_lm_model.rds")
+
+# Prepare new data for prediction
+new_data <- data.frame(
+  Brand = "New Balance",
+  Category = "Dress",
+  Color = "White",
+  Size = "XS",
+  Material = "Nylon"
+)
+
+# Use the loaded model to make predictions
+predictions_loaded_model <- predict(loaded_lm_model, newdata = new_data)
+
+# Print predictions
+print(predictions_loaded_model)
+
+```
+
+
+
